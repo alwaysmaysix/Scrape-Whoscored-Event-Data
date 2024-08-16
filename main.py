@@ -18,23 +18,34 @@ import datetime
 from datetime import datetime as dt
 import itertools
 import numpy as np
+from selenium.webdriver.common.by import By
+
+# Importing the necessary libraries for Selenium in Google Colab
+from google.colab import drive
+from google.colab import output
+from google.colab_selenium import init
+from selenium import webdriver
+
 try:
     from tqdm import trange
 except ModuleNotFoundError:
     pass
 
+# Initialize Selenium in Colab environment
+init()
 
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-
+# Setting up Chrome options for headless operation
 options = webdriver.ChromeOptions()
+options.add_argument('--headless')
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--disable-gpu')
+options.add_argument('--window-size=1920,1080')
+options.add_argument('--disable-extensions')
+options.add_argument('--disable-setuid-sandbox')
+options.add_argument('--remote-debugging-port=9222')
 
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
-
+# Translation dictionary
 TRANSLATE_DICT = {'Jan': 'Jan',
                  'Feb': 'Feb',
                  'Mac': 'Mar',
@@ -62,15 +73,9 @@ TRANSLATE_DICT = {'Jan': 'Jan',
 
 main_url = 'https://1xbet.whoscored.com/'
 
-
-
 def getLeagueUrls(minimize_window=True):
+    driver = webdriver.Chrome(options=options)
     
-    driver = webdriver.Chrome()
-
-    if minimize_window:
-        driver.minimize_window()
-
     driver.get(main_url)
     league_names = []
     league_urls = []
@@ -89,21 +94,20 @@ def getLeagueUrls(minimize_window=True):
         for country in n_country:
             country_id = country.find('div', {'class': 'TournamentsDropdownMenu-module_countryDropdown__8rtD-'}).get('id')
 
-            # Trouver l'élément avec Selenium et cliquer dessus
+            # Find the element with Selenium and click on it
             country_element = driver.find_element(By.ID, country_id)
             country_element.click()
 
             html_tournaments_list = driver.find_element(By.XPATH, '//*[@id="header-wrapper"]/div/div/div/div[4]/div[2]/div/div/div/div[2]').get_attribute('innerHTML')
 
-            # Parse le HTML avec BeautifulSoup pour trouver les liens des tournois
+            # Parse the HTML with BeautifulSoup to find the tournament links
             soup_tournaments = soup(html_tournaments_list, 'html.parser')
             tournaments = soup_tournaments.find_all('a')
 
-            # Ajouter les tournois à la liste n_tournaments
+            # Add tournaments to the list n_tournaments
             n_tournaments.extend(tournaments)
 
             driver.execute_script("arguments[0].click();", country_element)
-
 
     for tournament in n_tournaments:
         league_name = tournament.get('href').split('/')[-1]
@@ -112,20 +116,15 @@ def getLeagueUrls(minimize_window=True):
         league_urls.append(league_link)
 
     leagues = {}
-    for name,link in zip(league_names,league_urls):
+    for name, link in zip(league_names, league_urls):
         leagues[name] = link
 
-    driver.close()
+    driver.quit()
     return leagues
 
-
 def getMatchUrls(comp_urls, competition, season, maximize_window=True):
+    driver = webdriver.Chrome(options=options)
 
-    driver = webdriver.Chrome()
-    
-    if maximize_window:
-        driver.maximize_window()
-    
     comp_url = comp_urls[competition]
     driver.get(comp_url)
     time.sleep(5)
@@ -133,11 +132,9 @@ def getMatchUrls(comp_urls, competition, season, maximize_window=True):
     seasons = driver.find_element(By.XPATH, '//*[@id="seasons"]').get_attribute('innerHTML').split(sep='\n')
     seasons = [i for i in seasons if i]
     
-    
-    for i in range(1, len(seasons)+1):
-        if driver.find_element(By.XPATH, '//*[@id="seasons"]/option['+str(i)+']').text == season:
-            driver.find_element(By.XPATH, '//*[@id="seasons"]/option['+str(i)+']').click()
-            
+    for i in range(1, len(seasons) + 1):
+        if driver.find_element(By.XPATH, '//*[@id="seasons"]/option[' + str(i) + ']').text == season:
+            driver.find_element(By.XPATH, '//*[@id="seasons"]/option[' + str(i) + ']').click()
             time.sleep(5)
             try:
                 stages = driver.find_element(By.XPATH, '//*[@id="stages"]').get_attribute('innerHTML').split(sep='\n')
@@ -145,11 +142,11 @@ def getMatchUrls(comp_urls, competition, season, maximize_window=True):
                 
                 all_urls = []
             
-                for i in range(1, len(stages)+1):
-                    print(driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').text)
+                for i in range(1, len(stages) + 1):
+                    print(driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').text)
                     if competition == 'Champions League' or competition == 'Europa League':
-                        if 'Grp' in driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').text or 'Final Stage' in driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').text:
-                            driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').click()
+                        if 'Grp' in driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').text or 'Final Stage' in driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').text:
+                            driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').click()
                             time.sleep(5)
                             
                             driver.execute_script("window.scrollTo(0, 400)") 
@@ -165,8 +162,8 @@ def getMatchUrls(comp_urls, competition, season, maximize_window=True):
                             continue
                     
                     elif competition == 'Major League Soccer':
-                        if 'Grp. ' not in driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').text: 
-                            driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').click()
+                        if 'Grp. ' not in driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').text: 
+                            driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').click()
                             time.sleep(5)
                         
                             driver.execute_script("window.scrollTo(0, 400)")
@@ -182,7 +179,7 @@ def getMatchUrls(comp_urls, competition, season, maximize_window=True):
                             continue
                         
                     else:
-                        driver.find_element(By.XPATH, '//*[@id="stages"]/option['+str(i)+']').click()
+                        driver.find_element(By.XPATH, '//*[@id="stages"]/option[' + str(i) + ']').click()
                         time.sleep(5)
                     
                         driver.execute_script("window.scrollTo(0, 400)")
@@ -208,123 +205,52 @@ def getMatchUrls(comp_urls, competition, season, maximize_window=True):
                 
                 all_urls += match_urls2
             
-            
             remove_dup = [dict(t) for t in {tuple(sorted(d.items())) for d in all_urls}]
             all_urls = getSortedData(remove_dup)
             
-            driver.close() 
+            driver.quit() 
     
             return all_urls
      
-    season_names = [re.search(r'\>(.*?)\<',season).group(1) for season in seasons]
-    driver.close() 
+    season_names = [re.search(r'\>(.*?)\<', season).group(1) for season in seasons]
+    driver.quit() 
     print('Seasons available: {}'.format(season_names))
     raise('Season Not Found.')
-    
-
-
-
 
 def getTeamUrls(team, match_urls):
-    
     team_data = []
     for fixture in match_urls:
         if fixture['home'] == team or fixture['away'] == team:
             team_data.append(fixture)
-    team_data = [a[0] for a in itertools.groupby(team_data)]
-                
+    team_data = getSortedData(team_data)
     return team_data
 
-
-def getMatchesData(match_urls, minimize_window=True):
-    
-    matches = []
-    
-    driver = webdriver.Chrome()
-    if minimize_window:
-        driver.minimize_window()
-    
-    try:
-        for i in trange(len(match_urls), desc='Getting Match Data'):
-            # recommended to avoid getting blocked by incapsula/imperva bots
-            time.sleep(7)
-            match_data = getMatchData(driver, main_url+match_urls[i]['url'], display=False, close_window=False)
-            matches.append(match_data)
-    except NameError:
-        print('Recommended: \'pip install tqdm\' for a progress bar while the data gets scraped....')
-        time.sleep(7)
-        for i in range(len(match_urls)):
-            match_data = getMatchData(driver, main_url+match_urls[i]['url'], display=False, close_window=False)
-            matches.append(match_data)
-    
-    driver.close()
-    
-    return matches
-
-
-
-
 def getFixtureData(driver):
-    matches_ls = []
-    while True:
-        initial = driver.page_source
-        all_fixtures = driver.find_elements(By.CLASS_NAME, 'Accordion-module_accordion__UuHD0')
-        for dates in all_fixtures:
-            fixtures = dates.find_elements(By.CLASS_NAME, 'Match-module_row__zwBOn')
-            date_row = dates.find_element(By.CLASS_NAME, 'Accordion-module_header__HqzWD')
-            for row in fixtures:
-                url = row.find_element(By.TAG_NAME, 'a')
-                if 'Live' in url.get_attribute('href'):
-                    match_dict = {}
-                    element = soup(row.get_attribute('innerHTML'), features='lxml')
-                    teams_tag = element.find("div", {"class":"Match-module_teams__sGVeq"})
-                    link_tag = element.find("a")
-                    match_dict['date'] = date_row.text
-                    match_dict['home'] = teams_tag.find_all('a')[0].text
-                    match_dict['away'] = teams_tag.find_all('a')[1].text
-                    match_dict['score'] = ':'.join([t.text for t in link_tag.find_all('span')])
-                    match_dict['url'] = link_tag['href']
-                    matches_ls.append(match_dict)
-        prev_btn = driver.find_element(By.ID, 'dayChangeBtn-prev')
-        prev_btn.click()
-        time.sleep(1)
-        final = driver.page_source
-        if initial == final:
-            break
-
-    return matches_ls
-
-
-
-
-
-
-def translateDate(data):
-    
-    unwanted = []
-    for match in data:
-        date = match['date'].split()
-        if '?' not in date[0]:
-            try:
-                match['date'] = ' '.join([TRANSLATE_DICT[date[0]], date[1], date[2]])
-            except KeyError:
-                print(date)
+    html_fixtures = driver.find_element(By.XPATH, '//*[@id="tournament-fixture"]').get_attribute('innerHTML')
+    fixtures = soup(html_fixtures, 'html.parser').find_all('a', {'class':'result-1 rc'}) 
+    urls = []
+    for fixture in fixtures:
+        try:
+            h, a = fixture['title'].split(' - ')
+        except ValueError:
+            continue
+        try:
+            d = fixture.parent.parent.find_all('td')[-1].text.split('\n')[1].strip()
+        except IndexError:
+            d = fixture.parent.parent.find_all('td')[-1].text.strip()
+            
+        if re.findall('\d+',d):
+            d = dt.strptime(d.replace(re.findall('\d+',d)[0], TRANSLATE_DICT[re.findall('\d+',d)[0]]), "%d %b %Y").strftime("%d/%m/%Y")
         else:
-            unwanted.append(data.index(match))
-    
-    # remove matches that got suspended/postponed
-    for i in sorted(unwanted, reverse = True):
-        del data[i]
-    
-    return data
-
+            pass
+            
+        url = {'home': h, 'away': a, 'date': d, 'url': main_url[:-1]+fixture['href']}
+        urls.append(url)
+    return urls
 
 def getSortedData(data):
-    data = sorted(data, key = lambda i: dt.strptime(i['date'], '%A, %b %d %Y'))
+    data = sorted(data, key=lambda x: (dt.strptime(x['date'], "%d/%m/%Y"), x['home'], x['away']))
     return data
-    
-
-
 
 def getMatchData(driver, url, display=True, close_window=True):
     try:
