@@ -2,7 +2,7 @@ numpy
 pandas
 matplotlib
 seaborn
-google-colab-selenium[undetected]
+google-colab-selenium
 mplsoccer==1.2.2
 requests
 unzip
