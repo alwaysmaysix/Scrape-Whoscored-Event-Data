@@ -24,27 +24,32 @@ def install(package):
 
 if __name__ == "__main__":
     # Install the package
-    install("google-colab-selenium[undetected]==2.1.0")
-    install("google-colab-selenium==2.1.0")
+    install("google-colab-selenium[undetected]")
+    install("google-colab-selenium")
     
 from selenium.webdriver.common.by import By
 
 # Importing the necessary libraries for Selenium in Google Colab
 from google.colab import drive
 from google.colab import output
-from google_colab_selenium import init
-from selenium import webdriver
-
+from google_colab_selenium import gs
+from selenium.webdriver.chrome.options import Options
+from random import choice
 try:
     from tqdm import trange
 except ModuleNotFoundError:
     pass
 
-# Initialize Selenium in Colab environment
-init()
+user_agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+    'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; AS; rv:11.0) like Gecko',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36']
+
 
 # Setting up Chrome options for headless operation
-options = webdriver.ChromeOptions()
+options = Options()
 options.add_argument('--headless')
 options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
@@ -53,6 +58,8 @@ options.add_argument('--window-size=1920,1080')
 options.add_argument('--disable-extensions')
 options.add_argument('--disable-setuid-sandbox')
 options.add_argument('--remote-debugging-port=9222')
+options.add_argument(f'--user-agent={choice(user_agents)}')
+driver = gs.Chrome(options=options)
 
 # Translation dictionary
 TRANSLATE_DICT = {'Jan': 'Jan',
@@ -83,7 +90,7 @@ TRANSLATE_DICT = {'Jan': 'Jan',
 main_url = 'https://1xbet.whoscored.com/'
 
 def getLeagueUrls(minimize_window=True):
-    driver = webdriver.Chrome(options=options)
+    driver = gs.Chrome(options=options)
     
     driver.get(main_url)
     league_names = []
@@ -132,7 +139,7 @@ def getLeagueUrls(minimize_window=True):
     return leagues
 
 def getMatchUrls(comp_urls, competition, season, maximize_window=True):
-    driver = webdriver.Chrome(options=options)
+    driver = gs.Chrome(options=options)
 
     comp_url = comp_urls[competition]
     driver.get(comp_url)
