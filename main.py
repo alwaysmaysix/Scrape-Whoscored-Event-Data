@@ -18,6 +18,15 @@ import datetime
 from datetime import datetime as dt
 import itertools
 import numpy as np
+
+def install(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+if __name__ == "__main__":
+    # Install the package
+    install("google-colab-selenium[undetected]")
+    install("google-colab-selenium")
+    
 from selenium.webdriver.common.by import By
 
 # Importing the necessary libraries for Selenium in Google Colab
