@@ -32,7 +32,7 @@ from selenium.webdriver.common.by import By
 # Importing the necessary libraries for Selenium in Google Colab
 from google.colab import drive
 from google.colab import output
-from google_colab_selenium import gs
+import google_colab_selenium as gs
 from selenium.webdriver.chrome.options import Options
 from random import choice
 try:
