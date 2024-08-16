@@ -32,7 +32,7 @@ from selenium.webdriver.common.by import By
 # Importing the necessary libraries for Selenium in Google Colab
 from google.colab import drive
 from google.colab import output
-from google.colab_selenium import init
+from google_colab_selenium import init
 from selenium import webdriver
 
 try:
