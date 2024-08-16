@@ -25,7 +25,7 @@ def install(package):
 if __name__ == "__main__":
     # Install the package
     install("google-colab-selenium[undetected]")
-    install("google-colab-selenium")
+    install("google-colab-selenium==2.1.0")
     
 from selenium.webdriver.common.by import By
 
